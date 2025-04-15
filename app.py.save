@@ -1,0 +1,101 @@
+from flask import Flask, jsonify, request, render_template
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///plants.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+# Define the Plant model
+class Plant(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    last_watered = db.Column(db.String(100), nullable=False)
+#Route serving index.html
+@app.route('/')
+def home():
+    return render_template('index.html')
+# Route to get all plants
+@app.route('/plants', methods=['GET'])
+def get_plants():
+    plants = Plant.query.all()
+    return jsonify([{'id': p.id, 'name': p.name, 'last_watered': p.last_watered} for p in plants])
+
+# Route to add a new plant
+@app.route('/plants', methods=['POST'])
+def add_plant():
+    data = request.get_json()
+    if not data or "name" not in data:  # Prevent missing name issues
+        return jsonify({"error": "Missing plant name"}), 400
+
+    new_plant = Plant(name=data['name'], last_watered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    db.session.add(new_plant)
+    db.session.commit()
+    return jsonify({'message': 'Plant added!'}), 201
+
+# Route to update watering time
+@app.route('/plants/<int:plant_id>/water', methods=['PUT'])
+def water_plant(plant_id):
+    plant = Plant.query.get(plant_id)
+    if not plant:
+        return jsonify({'message': 'Plant not found'}), 404
+
+    plant.last_watered = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    db.session.commit()
+    return jsonify({'message': 'Plant watered!'})
+
+# Initialize database
+@app.before_request
+def create_tables():
+    db.create_all()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
+
+# Getting the weather
+import requests
+
+API_KEY = "6b66cef6f3ae647fd568e90199d8a4e0"  # Replace with your API key
+LOCATION = "New Caney,US"
+
+def get_weather():
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={LOCATION}&appid={API_KEY}&units=metric"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+@app.route('/weather', methods=['GET'])
+def fetch_weather():
+    weather = get_weather()
+    if weather:
+        return jsonify(weather)
+    return jsonify({'error': 'Failed to fetch weather'}), 500
+
+
+
+# Generate Watering Recommendations based off of weather and last watering time
+from datetime import datetime
+
+@app.route('/recommendation', methods=['GET'])
+def watering_recommendation():
+    plants = Plant.query.all()
+    weather = get_weather()
+
+    if not weather:
+        return jsonify({'error': 'Weather data unavailable'}), 500
+
+    temp = weather['temperature']
+    humidity = weather['humidity']
+    recommendations = []
+    for plant in plants:
+        last_watered = datetime.strptime(plant.last_watered, "%Y-%m-%d %H:%M:%S")
+        days_since_watered = (datetime.now() - last_watered).days
+
+        if temp > 30 or humidity < 30 or days_since_watered > 2:
+            recommendations.append({'plant': plant.name, 'action': 'Water needed'})
+        else:
+            recommendations.append({'plant': plant.name, 'action': 'No watering needed'})
+
+    return jsonify(recommendations)
+
