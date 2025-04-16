@@ -1,0 +1,8 @@
+# Ignore Mac local dev stuff
+venv/
+__pycache__/
+*.pyc
+instance/
+plants.db
+.env
+
