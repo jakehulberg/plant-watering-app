@@ -17,6 +17,7 @@ class Plant(db.Model):
 @app.route('/')
 def home():
     return render_template('index.html')
+
 # Route to get all plants
 @app.route('/plants', methods=['GET'])
 def get_plants():
