@@ -43,6 +43,11 @@ def weather_page():
     recommendations = watering_recommendation().json if watering_recommendation().status_code == 200 else []
     return render_template('weather.html', weather=weather, recommendations=recommendations)
 
+# Route for Database display
+@app.route('/database')
+def view_database():
+    plants = Plant.query.all()
+    return render_template('database.html', plants=plants)
 
 # Route to update watering time
 @app.route('/plants/<int:plant_id>/water', methods=['PUT'])
