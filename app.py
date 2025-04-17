@@ -43,6 +43,7 @@ def weather_page():
     recommendations = watering_recommendation().json if watering_recommendation().status_code == 200 else []
     return render_template('weather.html', weather=weather, recommendations=recommendations)
 
+
 # Route to update watering time
 @app.route('/plants/<int:plant_id>/water', methods=['PUT'])
 def water_plant(plant_id):
@@ -66,8 +67,10 @@ import requests
 API_KEY = "6b66cef6f3ae647fd568e90199d8a4e0"  # Replace with your API key
 LOCATION = "New Caney,US"
 
+def c_to_f(c):
+    return round((c * 9/5) + 32, 1)
+
 def get_weather():
-    # Fetch current weather
     current_url = f"http://api.openweathermap.org/data/2.5/weather?q={LOCATION}&appid={API_KEY}&units=metric"
     forecast_url = f"http://api.openweathermap.org/data/2.5/forecast?q={LOCATION}&appid={API_KEY}&units=metric"
 
@@ -78,22 +81,24 @@ def get_weather():
         current_data = current_response.json()
         forecast_data = forecast_response.json()
 
-        temp = current_data['main']['temp']
+        temp_c = current_data['main']['temp']
         humidity = current_data['main']['humidity']
-        rain_last_hour = current_data.get('rain', {}).get('1h', 0)  # Last hour rain
+        rain_last_hour = current_data.get('rain', {}).get('1h', 0)
 
-        # Extract rain forecast for the next 12 hours
         rain_forecast = 0
-        for entry in forecast_data['list'][:4]:  # Each entry is 3 hours ahead, so 4 entries = 12 hours
+        for entry in forecast_data['list'][:4]:
             rain_forecast += entry.get('rain', {}).get('3h', 0)
 
         return {
-            'temperature': temp,
+            'temperature_c': temp_c,
+            'temperature_f': c_to_f(temp_c),
             'humidity': humidity,
             'rain_last_hour': rain_last_hour,
             'rain_forecast': rain_forecast
         }
+
     return None
+
 
 @app.route('/weather', methods=['GET'])
 def fetch_weather():
@@ -116,7 +121,7 @@ def watering_recommendation():
         return jsonify({'error': 'Weather data unavailable'}), 500
 
     # Extract weather data
-    temp = weather['temperature']
+    temp = weather['temperature_c']
     humidity = weather['humidity']
     rain_forecast = weather['rain_forecast']
 

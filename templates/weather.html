@@ -19,7 +19,8 @@
   </a>
   
   {% if weather %}
-    <p><strong>Temp:</strong> {{ weather.temperature }}°C |
+  <p><strong>Temp:</strong> {{ weather.temperature_c }}°C / {{ weather.temperature_f }}°F
+  |
        <strong>Humidity:</strong> {{ weather.humidity }}% |
        <strong>Rain (12h):</strong> {{ weather.rain_forecast }} mm</p>
   {% else %}
