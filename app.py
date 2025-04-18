@@ -12,6 +12,8 @@ class Plant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     last_watered = db.Column(db.String(100), nullable=False)
+    moisture_level = db.Column(db.Integer, nullable=True)
+
 
 #Route serving index.html
 @app.route('/')
@@ -91,7 +93,7 @@ def get_weather():
         rain_last_hour = current_data.get('rain', {}).get('1h', 0)
 
         rain_forecast = 0
-        for entry in forecast_data['list'][:4]:
+        for entry in forecast_data['list'][:8]:
             rain_forecast += entry.get('rain', {}).get('3h', 0)
 
         return {
@@ -119,72 +121,90 @@ from datetime import datetime
 
 @app.route('/recommendation', methods=['GET'])
 def watering_recommendation():
+    # Pull plant data and current weather
     plants = Plant.query.all()
     weather = get_weather()
 
     if not weather:
         return jsonify({'error': 'Weather data unavailable'}), 500
 
-    # Extract weather data
-    temp = weather['temperature_c']
-    humidity = weather['humidity']
-    rain_forecast = weather['rain_forecast']
+    # Extract weather metrics
+    temp = weather['temperature']              # Max temp (next 24h)
+    humidity = weather['humidity']             # Min humidity (next 24h)
+    rain_forecast = weather['rain_forecast']   # Total mm of rain expected in next 24h
 
-    # Debugging: Print weather data
-    print(f"Weather Data - Temp: {temp}°C, Humidity: {humidity}%, Rain Forecast: {rain_forecast}mm")
+    print(f"Weather: Temp={temp}°C, Humidity={humidity}%, Rain={rain_forecast}mm")
 
-    # Define plant-specific watering needs
+    # All plant profiles with moisture thresholds
     plant_profiles = {
-        "Cactus": {"water_threshold": 7, "temp_threshold": 38, "humidity_threshold": 15},
-        "Succulent": {"water_threshold": 6, "temp_threshold": 35, "humidity_threshold": 20},
-        "Grass": {"water_threshold": 2, "temp_threshold": 30, "humidity_threshold": 40},
-        "Zinnia": {"water_threshold": 3, "temp_threshold": 28, "humidity_threshold": 35},
-        "Purple Passionfruit": {"water_threshold": 2, "temp_threshold": 30, "humidity_threshold": 40},
-        "Pink Jasmine": {"water_threshold": 3, "temp_threshold": 28, "humidity_threshold": 35},
-        "Tomato": {"water_threshold": 2, "temp_threshold": 29, "humidity_threshold": 45},
-        "Basil": {"water_threshold": 1, "temp_threshold": 28, "humidity_threshold": 50},
-        "General": {"water_threshold": 3, "temp_threshold": 30, "humidity_threshold": 35}  # Default settings
+        "Cactus": {"water_threshold": 7, "temp_threshold": 38, "humidity_threshold": 15, "moisture_threshold": 2},
+        "Succulent": {"water_threshold": 6, "temp_threshold": 35, "humidity_threshold": 20, "moisture_threshold": 3},
+        "Grass": {"water_threshold": 2, "temp_threshold": 30, "humidity_threshold": 40, "moisture_threshold": 5},
+        "Zinnia": {"water_threshold": 3, "temp_threshold": 28, "humidity_threshold": 35, "moisture_threshold": 4},
+        "Purple Passionfruit": {"water_threshold": 2, "temp_threshold": 30, "humidity_threshold": 40, "moisture_threshold": 4},
+        "Pink Jasmine": {"water_threshold": 3, "temp_threshold": 28, "humidity_threshold": 35, "moisture_threshold": 4},
+        "Tomato": {"water_threshold": 2, "temp_threshold": 29, "humidity_threshold": 45, "moisture_threshold": 5},
+        "Basil": {"water_threshold": 1, "temp_threshold": 28, "humidity_threshold": 50, "moisture_threshold": 6},
+        "Corn": {"water_threshold": 2, "temp_threshold": 30, "humidity_threshold": 45, "moisture_threshold": 6},
+        "Beans": {"water_threshold": 2, "temp_threshold": 28, "humidity_threshold": 40, "moisture_threshold": 5},
+        "Peppers": {"water_threshold": 2, "temp_threshold": 30, "humidity_threshold": 45, "moisture_threshold": 5},
+        "Lettuce": {"water_threshold": 1, "temp_threshold": 26, "humidity_threshold": 50, "moisture_threshold": 7},
+        "General": {"water_threshold": 3, "temp_threshold": 30, "humidity_threshold": 35, "moisture_threshold": 4}
     }
 
     recommendations = []
+
     for plant in plants:
+        # Step 1: Get basic info
         last_watered = datetime.strptime(plant.last_watered, "%Y-%m-%d %H:%M:%S")
         days_since_watered = (datetime.now() - last_watered).days
+        moisture_level = plant.moisture_level  # This can be None if not recorded
+        plant_type = "General"
 
-        # Determine which profile to use
-        plant_type = "General"  # Default
-        for profile in plant_profiles.keys():
-            if profile.lower() in plant.name.lower():
-                plant_type = profile
-                break  # Use the first matching plant type
+        # Match the plant to its profile
+        for key in plant_profiles:
+            if key.lower() in plant.name.lower():
+                plant_type = key
+                break
 
         profile = plant_profiles[plant_type]
         water_threshold = profile["water_threshold"]
         temp_threshold = profile["temp_threshold"]
         humidity_threshold = profile["humidity_threshold"]
+        moisture_threshold = profile["moisture_threshold"]
 
-        # Debugging: Print plant data
-        print(f"Plant: {plant.name}, Last Watered: {days_since_watered} days ago, Type: {plant_type}")
-        print(f"  - Thresholds -> Water: {water_threshold} days, Temp: {temp_threshold}°C, Humidity: {humidity_threshold}%")
+        print(f"\n🌿 {plant.name} ({plant_type})")
+        print(f"  Days Since Watered: {days_since_watered}")
+        print(f"  Moisture Level: {moisture_level}")
+        print(f"  Profile Thresholds: W={water_threshold}, T={temp_threshold}, H={humidity_threshold}, M={moisture_threshold}")
 
-        # Rain check FIRST: Skip watering if significant rain is coming
+        # 🔹 PRIORITY 1: Skip watering if rain is expected and soil isn't dangerously dry
         if rain_forecast > 5:
-            recommendations.append({'plant': plant.name, 'action': 'No watering needed (rain expected)'})
-            continue  # Skip further checks
+            if moisture_level is None or moisture_level >= (moisture_threshold - 1):
+                recommendations.append({'plant': plant.name, 'action': 'No watering needed (rain expected)'})
+                print("  ✅ Skipping — Rain expected soon and soil is not too dry.")
+                continue
 
-        # Primary watering condition: Days since last watering
-        if days_since_watered > water_threshold:
-            recommendations.append({'plant': plant.name, 'action': 'Water needed'})
-        elif temp > temp_threshold or humidity < humidity_threshold:
-            # Only check temp/humidity if plant is ALMOST due
-            if days_since_watered == water_threshold:
-                recommendations.append({'plant': plant.name, 'action': 'Water needed (hot/dry conditions)'})
+        # 🔹 PRIORITY 2: Use moisture sensor data if available
+        if moisture_level is not None:
+            if moisture_level < moisture_threshold:
+                recommendations.append({'plant': plant.name, 'action': 'Water needed (dry soil)'})
+                print("  💧 Watering — Soil is too dry.")
             else:
-                recommendations.append({'plant': plant.name, 'action': 'No watering needed'})
+                recommendations.append({'plant': plant.name, 'action': 'No watering needed (moist soil)'})
+                print("  ✅ Skipping — Soil is moist enough.")
+            continue
+
+        # 🔹 PRIORITY 3: Fallback on weather & last watering date
+        if days_since_watered > water_threshold or temp > temp_threshold or humidity < humidity_threshold:
+            recommendations.append({'plant': plant.name, 'action': 'Water needed (weather-based)'})
+            print("  🌤️ Watering — Weather or time suggests it's needed.")
         else:
             recommendations.append({'plant': plant.name, 'action': 'No watering needed'})
+            print("  ✅ Skipping — Conditions don’t justify watering.")
 
     return jsonify(recommendations)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
