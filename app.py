@@ -13,6 +13,19 @@ class Plant(db.Model):
     name = db.Column(db.String(100), nullable=False)
     last_watered = db.Column(db.String(100), nullable=False)
     moisture_level = db.Column(db.Integer, nullable=True)
+    
+#API route for REACT
+@app.route('/api/plants', methods=['GET'])
+def api_get_plants():
+    plants = Plant.query.all()
+    return jsonify([
+        {
+            'id': plant.id,
+            'name': plant.name,
+            'last_watered': plant.last_watered,
+            'moisture_level': plant.moisture_level
+        } for plant in plants
+    ])
 
 
 #Route serving index.html
@@ -129,7 +142,7 @@ def watering_recommendation():
         return jsonify({'error': 'Weather data unavailable'}), 500
 
     # Extract weather metrics
-    temp = weather['temperature']              # Max temp (next 24h)
+    temp = weather['temperature_c']              # Max temp (next 24h)
     humidity = weather['humidity']             # Min humidity (next 24h)
     rain_forecast = weather['rain_forecast']   # Total mm of rain expected in next 24h
 
