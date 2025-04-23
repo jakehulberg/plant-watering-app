@@ -1,6 +1,11 @@
 from flask import Flask, jsonify, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///plants.db'
@@ -103,7 +108,7 @@ def create_tables():
 # Getting the weather
 import requests
 
-API_KEY = "6b66cef6f3ae647fd568e90199d8a4e0"  # Replace with your API key
+API_KEY = os.getenv("OPENWEATHER_API_KEY")  # Replace with your API key
 LOCATION = "New Caney,US"
 
 def c_to_f(c):
