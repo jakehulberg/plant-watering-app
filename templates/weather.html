@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Weather & Watering Info</title>
+  <style>
+    body { font-family: Arial; padding: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
+    th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+    th { background-color: #f4f4f4; }
+    .water { background-color: #ffcccc; }
+    .dry { background-color: #ffeeba; }
+    .good { background-color: #d4edda; }
+  </style>
+</head>
+<body>
+  <h1>🌦️ Weather Forecast</h1>
+  <a href="/" style="display:inline-block; margin: 1rem 0; padding: 0.5rem 1rem; background:#007bff; color:white; text-decoration:none; border-radius:5px;">
+    ⬅ Home
+  </a>
+  
+  {% if weather %}
+  <p><strong>Temp:</strong> {{ weather.temperature_c }}°C / {{ weather.temperature_f }}°F
+  |
+       <strong>Humidity:</strong> {{ weather.humidity }}% |
+       <strong>Rain (12h):</strong> {{ weather.rain_forecast }} mm</p>
+  {% else %}
+    <p>Could not fetch weather data.</p>
+  {% endif %}
+
+  <h2>💧 Watering Recommendations</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Plant</th>
+        <th>Recommendation</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rec in recommendations %}
+        <tr class="{% if 'Water' in rec.action %}water{% elif 'rain' in rec.action %}dry{% else %}good{% endif %}">
+          <td>{{ rec.plant }}</td>
+          <td>{{ rec.action }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

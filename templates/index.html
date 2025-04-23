@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Watering App</title>
+</head>
+<body>
+<div class="container">
+    <h1>Plant Watering App</h1>
+    <a href="/weather-page" style="display:inline-block; margin: 1rem 0; padding: 0.5rem 1rem; background:#28a745; color:white; text-decoration:none; border-radius:5px;">
+        🌦️ Go to Weather Page
+      </a>
+
+      <a href="/database" style="display:inline-block; margin: 1rem 0; padding: 0.5rem 1rem; background:#17a2b8; color:white; text-decoration:none; border-radius:5px;">
+        📊 View Database
+      </a>      
+      
+    <div id="plants" class="plant-container"></div>
+
+    <script>
+        async function fetchPlants() {
+            const response = await fetch('/plants');
+            const plants = await response.json();
+            const plantDiv = document.getElementById('plants');
+            plantDiv.innerHTML = '';
+
+            plants.forEach(plant => {
+                const plantElement = document.createElement('div');
+                plantElement.classList.add('plant');
+                plantElement.innerHTML = `
+                    <h3>${plant.name}</h3>
+                    <p>Last Watered: ${plant.last_watered}</p>
+                    <button onclick="waterPlant(${plant.id})">Water</button>
+                `;
+                plantDiv.appendChild(plantElement);
+            });
+        }
+
+        async function waterPlant(plantId) {
+            await fetch(`/plants/${plantId}/water`, { method: 'PUT' });
+            fetchPlants();
+        }
+
+        fetchPlants();
+    </script>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+<h2>Add a New Plant</h2>
+<form id="plant-form">
+    <input type="text" id="plant-name" placeholder="Plant Name" required>
+    <button type="submit">Add Plant</button>
+</form>
+
+<script>
+    document.getElementById('plant-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const name = document.getElementById('plant-name').value;
+
+        await fetch('/plants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+
+        document.getElementById('plant-name').value = ''; // Clear input
+        fetchPlants(); // Refresh list
+    });
+</script>
+
+
+
+
+
+
+
+<h2>Watering Recommendations</h2>
+<button onclick="fetchRecommendations()">Get Recommendations</button>
+<div id="recommendations"></div>
+
+<script>
+    async function fetchRecommendations() {
+        const response = await fetch('/recommendation');
+        const recommendations = await response.json();
+        const recDiv = document.getElementById('recommendations');
+        recDiv.innerHTML = '';
+
+        recommendations.forEach(rec => {
+            const recElement = document.createElement('p');
+            recElement.innerText = `${rec.plant}: ${rec.action}`;
+            recDiv.appendChild(recElement);
+        });
+    }
+</script>
