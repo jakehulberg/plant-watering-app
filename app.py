@@ -32,25 +32,39 @@ def api_get_plants():
         } for plant in plants
     ])
 
-#API route for posting to plant list
-@app.route('/api/plants', methods=['POST'])
-def api_add_plant():
-    data = request.get_json()
+#API Route for Getting and Posting plants
+@app.route('/api/plants', methods=['GET', 'POST'])
+def api_plants():
+    if request.method == 'POST':
+        data = request.get_json()
 
-    # Basic validation
-    if not data or 'name' not in data or 'moisture_level' not in data:
-        return jsonify({'error': 'Missing name or moisture level'}), 400
+        if not data or 'name' not in data or 'moisture_level' not in data:
+            return jsonify({'error': 'Missing name or moisture level'}), 400
 
-    new_plant = Plant(
-        name=data['name'],
-        last_watered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        moisture_level=int(data['moisture_level'])
-    )
+        new_plant = Plant(
+            name=data['name'],
+            last_watered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            moisture_level=int(data['moisture_level'])
+        )
 
-    db.session.add(new_plant)
-    db.session.commit()
+        db.session.add(new_plant)
+        db.session.commit()
 
-    return jsonify({'message': 'Plant added!'}), 201
+        return jsonify({'message': 'Plant added!'}), 201
+
+    elif request.method == 'GET':
+        plants = Plant.query.all()
+        plant_list = [{
+            'id': p.id,
+            'name': p.name,
+            'moisture_level': p.moisture_level,
+            'last_watered': p.last_watered
+        } for p in plants]
+
+        return jsonify(plant_list)
+
+
+#API route for getting full DB page
 
 #Route serving index.html
 @app.route('/')
@@ -81,6 +95,7 @@ def weather_page():
     weather = get_weather()
     recommendations = watering_recommendation().json if watering_recommendation().status_code == 200 else []
     return render_template('weather.html', weather=weather, recommendations=recommendations)
+
 
 # Route for Database display
 @app.route('/database')
