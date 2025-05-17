@@ -259,6 +259,9 @@ def watering_recommendation():
 
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(host='0.0.0.0', port=5001, debug=True)
+
 
 ##This line added from MAC April 15, 2025 - plan to add a separate page to get some more info on the DB / waterings / weather"
