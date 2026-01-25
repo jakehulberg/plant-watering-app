@@ -1,70 +1,54 @@
-# Getting Started with Create React App
+# Plant Watering App - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This frontend has been migrated to **Vite + React + Tailwind CSS + shadcn/ui** for a modern, beautiful UI.
 
-## Available Scripts
+## Setup
 
-In the project directory, you can run:
+1. **Install dependencies:**
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-### `npm start`
+2. **Start development server:**
+   ```bash
+   npm run dev
+   ```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+   The app will run on `http://localhost:5173` (Vite's default port)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+3. **Build for production:**
+   ```bash
+   npm run build
+   ```
 
-### `npm test`
+## What's Changed
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- ✅ Migrated from Create React App to **Vite** (faster builds, better HMR)
+- ✅ Added **Tailwind CSS** for utility-first styling
+- ✅ Integrated **shadcn/ui** components for beautiful, accessible UI
+- ✅ Refactored all components to use modern React patterns
+- ✅ Added icons from **lucide-react**
+- ✅ Improved UX with loading states, error handling, and better visual feedback
 
-### `npm run build`
+## Components Used
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **Card** - For plant list and form containers
+- **Button** - For actions (add plant, water plant)
+- **Input** - For form fields
+- **Label** - For form labels
+- **Badge** - For moisture level indicators
+- **Alert** - For success/error messages
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Features
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Beautiful gradient background
+- Responsive grid layout for plant cards
+- Color-coded moisture level badges
+- Smart date formatting (Today, Yesterday, X days ago)
+- Loading states and error handling
+- Modern, accessible UI components
 
-### `npm run eject`
+## API Proxy
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The Vite config proxies API requests to your Flask backend at `http://localhost:5001`. Make sure your Flask server is running!
