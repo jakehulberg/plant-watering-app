@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from './components/ui/alert'
 function AddPlantForm({ onPlantAdded }) {
   const [name, setName] = useState('')
   const [moisture, setMoisture] = useState('')
+  const [interval, setInterval] = useState('')
   const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -18,7 +19,8 @@ function AddPlantForm({ onPlantAdded }) {
 
     const plantData = {
       name: name.trim(),
-      moisture_level: parseInt(moisture)
+      moisture_level: parseInt(moisture),
+      watering_interval_days: interval ? parseInt(interval) : undefined
     }
 
     try {
@@ -39,6 +41,7 @@ function AddPlantForm({ onPlantAdded }) {
       setMessage('success')
       setName('')
       setMoisture('')
+      setInterval('')
       if (onPlantAdded) onPlantAdded()
     } catch (err) {
       console.error(err)
@@ -87,6 +90,20 @@ function AddPlantForm({ onPlantAdded }) {
             <p className="text-xs text-muted-foreground">
               Lower numbers indicate drier soil
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="watering-interval">Watering Interval (days)</Label>
+            <Input
+              id="watering-interval"
+              type="number"
+              value={interval}
+              min="1"
+              max="30"
+              onChange={(e) => setInterval(e.target.value)}
+              placeholder="Default: every 3 days"
+              disabled={isLoading}
+            />
           </div>
 
           {message === 'success' && (

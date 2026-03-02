@@ -4,7 +4,7 @@ import { Badge } from './components/ui/badge'
 import { Button } from './components/ui/button'
 import { Thermometer, Droplets, CloudRain, RefreshCw } from 'lucide-react'
 
-function WeatherPage() {
+function WeatherPage({ refreshKey = 0 }) {
   const [weather, setWeather] = useState(null)
   const [recommendations, setRecommendations] = useState([])
   const [loadingWeather, setLoadingWeather] = useState(true)
@@ -40,7 +40,7 @@ function WeatherPage() {
   useEffect(() => {
     fetchWeather()
     fetchRecommendations()
-  }, [])
+  }, [refreshKey])
 
   const recBadgeVariant = (action) => {
     if (!action) return 'outline'

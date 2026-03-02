@@ -13,32 +13,35 @@ const TABS = [
 
 function App() {
   const [activeTab, setActiveTab] = useState('plants')
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleWatered = () => setRefreshKey(k => k + 1)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">
             🌿 Plant Watering App
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm text-gray-500">
             Keep track of your plants and get smart watering recommendations
           </p>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 border-b border-gray-200">
+        {/* Tab Navigation — large tap targets for mobile */}
+        <div className="flex border-b border-gray-200 mb-6">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              className={`flex-1 flex flex-col items-center gap-1 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${
                 activeTab === id
                   ? 'border-green-600 text-green-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-gray-500 active:bg-gray-100'
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-5 w-5" />
               {label}
             </button>
           ))}
@@ -48,10 +51,10 @@ function App() {
         {activeTab === 'plants' && (
           <div className="space-y-6">
             <AddPlantForm />
-            <PlantList />
+            <PlantList onWatered={handleWatered} />
           </div>
         )}
-        {activeTab === 'weather' && <WeatherPage />}
+        {activeTab === 'weather' && <WeatherPage refreshKey={refreshKey} />}
         {activeTab === 'database' && <DatabasePage />}
       </div>
     </div>
