@@ -6,3 +6,4 @@ instance/
 plants.db
 .env
 backups/
+venv/
