@@ -11,7 +11,7 @@ from routes.pages import pages_bp
 
 def create_app():
     """Create and configure the Flask application."""
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='frontend/dist', static_url_path='')
     app.config.from_object(Config)
     
     # Initialize database
