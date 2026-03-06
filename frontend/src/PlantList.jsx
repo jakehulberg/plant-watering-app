@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './com
 import { Badge } from './components/ui/badge'
 import { Button } from './components/ui/button'
 import { Input } from './components/ui/input'
-import { Droplets, Calendar, Leaf, Trash2, Pencil, Check, X } from 'lucide-react'
+import { Calendar, Leaf, Trash2, Pencil, Check, X, Droplets } from 'lucide-react'
 
 function PlantList({ onWatered }) {
   const [plants, setPlants] = useState([])
@@ -11,7 +11,7 @@ function PlantList({ onWatered }) {
   const [watering, setWatering] = useState(new Set())
   const [deleting, setDeleting] = useState(new Set())
   const [editingId, setEditingId] = useState(null)
-  const [editValues, setEditValues] = useState({ name: '', watering_interval_days: '' })
+  const [editValues, setEditValues] = useState({ name: '' })
   const [saving, setSaving] = useState(false)
 
   const fetchPlants = async () => {
@@ -72,15 +72,12 @@ function PlantList({ onWatered }) {
 
   const startEdit = (plant) => {
     setEditingId(plant.id)
-    setEditValues({
-      name: plant.name,
-      watering_interval_days: plant.watering_interval_days ?? 3
-    })
+    setEditValues({ name: plant.name })
   }
 
   const cancelEdit = () => {
     setEditingId(null)
-    setEditValues({ name: '', watering_interval_days: '' })
+    setEditValues({ name: '' })
   }
 
   const handleSaveEdit = async (plantId) => {
@@ -91,13 +88,12 @@ function PlantList({ onWatered }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editValues.name,
-          watering_interval_days: Number(editValues.watering_interval_days)
         })
       })
       if (!res.ok) throw new Error('Failed to update plant')
       await fetchPlants()
       setEditingId(null)
-      setEditValues({ name: '', watering_interval_days: '' })
+      setEditValues({ name: '' })
     } catch (error) {
       console.error('Error updating plant:', error)
     } finally {
@@ -106,7 +102,7 @@ function PlantList({ onWatered }) {
   }
 
   const getOverdueBadge = (plant) => {
-    const interval = plant.watering_interval_days ?? 3
+    const interval = plant.water_threshold ?? 3
     let daysSince = null
     try {
       const date = new Date(plant.last_watered)
@@ -138,13 +134,6 @@ function PlantList({ onWatered }) {
     } catch {
       return dateString
     }
-  }
-
-  const getMoistureBadgeVariant = (moisture) => {
-    if (!moisture) return 'outline'
-    if (moisture <= 3) return 'destructive'
-    if (moisture <= 5) return 'default'
-    return 'secondary'
   }
 
   if (loading) {
@@ -211,12 +200,6 @@ function PlantList({ onWatered }) {
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      {plant.moisture_level !== null && !isEditing && (
-                        <Badge variant={getMoistureBadgeVariant(plant.moisture_level)}>
-                          <Droplets className="h-3 w-3 mr-1" />
-                          {plant.moisture_level}/10
-                        </Badge>
-                      )}
                       {isEditing ? (
                         <>
                           <button
@@ -257,27 +240,6 @@ function PlantList({ onWatered }) {
                       )}
                     </div>
                   </div>
-                  {isEditing && (
-                    <div className="mt-2">
-                      <label className="text-xs text-muted-foreground mb-1 block">
-                        Watering interval (days)
-                      </label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={30}
-                        value={editValues.watering_interval_days}
-                        onChange={(e) =>
-                          setEditValues(prev => ({
-                            ...prev,
-                            watering_interval_days: e.target.value
-                          }))
-                        }
-                        className="h-9 w-32"
-                        placeholder="Days"
-                      />
-                    </div>
-                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">

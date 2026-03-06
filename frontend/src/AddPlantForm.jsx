@@ -7,8 +7,6 @@ import { Alert, AlertDescription } from './components/ui/alert'
 
 function AddPlantForm({ onPlantAdded }) {
   const [name, setName] = useState('')
-  const [moisture, setMoisture] = useState('')
-  const [interval, setInterval] = useState('')
   const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -19,8 +17,6 @@ function AddPlantForm({ onPlantAdded }) {
 
     const plantData = {
       name: name.trim(),
-      moisture_level: parseInt(moisture),
-      watering_interval_days: interval ? parseInt(interval) : undefined
     }
 
     try {
@@ -40,8 +36,6 @@ function AddPlantForm({ onPlantAdded }) {
       const data = await res.json()
       setMessage('success')
       setName('')
-      setMoisture('')
-      setInterval('')
       if (onPlantAdded) onPlantAdded()
     } catch (err) {
       console.error(err)
@@ -56,7 +50,7 @@ function AddPlantForm({ onPlantAdded }) {
       <CardHeader>
         <CardTitle>Add New Plant</CardTitle>
         <CardDescription>
-          Add a new plant to your collection. Moisture level is optional.
+          Add a new plant to your collection.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -70,38 +64,6 @@ function AddPlantForm({ onPlantAdded }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Basil, Tomato, Cactus"
               required
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="moisture-level">Moisture Level (1-10)</Label>
-            <Input
-              id="moisture-level"
-              type="number"
-              value={moisture}
-              min="1"
-              max="10"
-              onChange={(e) => setMoisture(e.target.value)}
-              placeholder="Enter moisture level"
-              required
-              disabled={isLoading}
-            />
-            <p className="text-xs text-muted-foreground">
-              Lower numbers indicate drier soil
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="watering-interval">Watering Interval (days)</Label>
-            <Input
-              id="watering-interval"
-              type="number"
-              value={interval}
-              min="1"
-              max="30"
-              onChange={(e) => setInterval(e.target.value)}
-              placeholder="Default: every 3 days"
               disabled={isLoading}
             />
           </div>

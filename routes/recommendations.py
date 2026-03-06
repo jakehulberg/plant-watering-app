@@ -11,18 +11,19 @@ recommendations_bp = Blueprint('recommendations', __name__)
 def watering_recommendation():
     """API route to get watering recommendations for all plants."""
     try:
-        # Pull plant data and current weather
         try:
             plants = Plant.query.all()
         except Exception as e:
             return jsonify({'error': f'Database error: {str(e)}'}), 500
 
         weather = get_weather()
-        if not weather:
-            return jsonify({'error': 'Weather data unavailable'}), 500
-
         recommendations = generate_recommendations(plants, weather)
-        return jsonify(recommendations)
+
+        response = {
+            'recommendations': recommendations,
+            'weather_available': weather is not None,
+        }
+        return jsonify(response)
 
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500

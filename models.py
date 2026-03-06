@@ -7,18 +7,19 @@ class Plant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     last_watered = db.Column(db.String(100), nullable=False)
-    moisture_level = db.Column(db.Integer, nullable=True)
-    watering_interval_days = db.Column(db.Integer, nullable=True, default=3)
     history = db.relationship('WateringHistory', backref='plant', lazy=True, cascade='all, delete-orphan')
 
     def to_dict(self):
         """Convert plant to dictionary."""
+        from services.recommendation_service import get_plant_type, PLANT_PROFILES
+        plant_type = get_plant_type(self.name)
+        profile = PLANT_PROFILES[plant_type]
         return {
             'id': self.id,
             'name': self.name,
             'last_watered': self.last_watered,
-            'moisture_level': self.moisture_level,
-            'watering_interval_days': self.watering_interval_days if self.watering_interval_days is not None else 3
+            'water_threshold': profile['water_threshold'],
+            'plant_type': plant_type,
         }
 
     def to_simple_dict(self):

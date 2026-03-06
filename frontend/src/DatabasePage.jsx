@@ -47,8 +47,7 @@ function DatabasePage() {
                 <tr className="border-b">
                   <th className="text-left py-2 pr-4 font-medium text-muted-foreground">ID</th>
                   <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Plant Name</th>
-                  <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Last Watered</th>
-                  <th className="text-left py-2 font-medium text-muted-foreground">Moisture Level</th>
+                  <th className="text-left py-2 font-medium text-muted-foreground">Last Watered</th>
                 </tr>
               </thead>
               <tbody>
@@ -56,8 +55,7 @@ function DatabasePage() {
                   <tr key={plant.id} className="border-b last:border-0">
                     <td className="py-2 pr-4 text-muted-foreground">{plant.id}</td>
                     <td className="py-2 pr-4 font-medium">{plant.name}</td>
-                    <td className="py-2 pr-4">{plant.last_watered}</td>
-                    <td className="py-2">{plant.moisture_level ?? '—'}</td>
+                    <td className="py-2">{plant.last_watered}</td>
                   </tr>
                 ))}
               </tbody>

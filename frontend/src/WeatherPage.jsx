@@ -2,14 +2,16 @@ import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import { Badge } from './components/ui/badge'
 import { Button } from './components/ui/button'
-import { Thermometer, Droplets, CloudRain, RefreshCw } from 'lucide-react'
+import { Thermometer, Droplets, CloudRain, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 
 function WeatherPage({ refreshKey = 0 }) {
   const [weather, setWeather] = useState(null)
   const [recommendations, setRecommendations] = useState([])
+  const [weatherAvailable, setWeatherAvailable] = useState(true)
   const [loadingWeather, setLoadingWeather] = useState(true)
   const [loadingRecs, setLoadingRecs] = useState(true)
   const [error, setError] = useState('')
+  const [expandedPlant, setExpandedPlant] = useState(null)
 
   const fetchWeather = async () => {
     setLoadingWeather(true)
@@ -29,7 +31,9 @@ function WeatherPage({ refreshKey = 0 }) {
     try {
       const res = await fetch('/recommendation')
       if (!res.ok) throw new Error('Failed to fetch recommendations')
-      setRecommendations(await res.json())
+      const data = await res.json()
+      setRecommendations(data.recommendations || [])
+      setWeatherAvailable(data.weather_available !== false)
     } catch (e) {
       // recommendations failing is non-fatal
     } finally {
@@ -42,11 +46,23 @@ function WeatherPage({ refreshKey = 0 }) {
     fetchRecommendations()
   }, [refreshKey])
 
-  const recBadgeVariant = (action) => {
-    if (!action) return 'outline'
-    if (action.toLowerCase().includes('water')) return 'destructive'
-    if (action.toLowerCase().includes('rain')) return 'secondary'
-    return 'default'
+  const recBadgeVariant = (rec) => {
+    if (!rec || rec.urgency === undefined) return 'outline'
+    if (rec.urgency >= 1.2) return 'destructive'
+    if (rec.urgency >= 0.5) return 'default'
+    if (rec.action === 'Delayed by rain') return 'secondary'
+    return 'outline'
+  }
+
+  const recBadgeClass = (rec) => {
+    if (rec && rec.urgency >= 0.8 && rec.urgency < 1.2) {
+      return 'bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500'
+    }
+    return ''
+  }
+
+  const toggleExpand = (plantName) => {
+    setExpandedPlant(expandedPlant === plantName ? null : plantName)
   }
 
   return (
@@ -81,7 +97,7 @@ function WeatherPage({ refreshKey = 0 }) {
               <div className="space-y-1">
                 <CloudRain className="mx-auto h-6 w-6 text-sky-400" />
                 <p className="text-2xl font-bold">{weather.rain_forecast} mm</p>
-                <p className="text-sm text-muted-foreground">Rain (12h)</p>
+                <p className="text-sm text-muted-foreground">Rain (24h)</p>
               </div>
             </div>
           ) : null}
@@ -96,6 +112,9 @@ function WeatherPage({ refreshKey = 0 }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {!weatherAvailable && (
+            <p className="text-sm text-yellow-600 mb-3">Weather data unavailable — recommendations based on time only.</p>
+          )}
           {loadingRecs ? (
             <p className="text-muted-foreground">Loading recommendations...</p>
           ) : recommendations.length === 0 ? (
@@ -103,9 +122,49 @@ function WeatherPage({ refreshKey = 0 }) {
           ) : (
             <div className="divide-y">
               {recommendations.map((rec, i) => (
-                <div key={i} className="flex items-center justify-between py-3">
-                  <span className="font-medium">{rec.plant}</span>
-                  <Badge variant={recBadgeVariant(rec.action)}>{rec.action}</Badge>
+                <div key={i}>
+                  <div
+                    className="flex items-center justify-between py-3 cursor-pointer hover:bg-muted/50 rounded px-2 -mx-2"
+                    onClick={() => toggleExpand(rec.plant)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{rec.plant}</span>
+                      <span className="text-xs text-muted-foreground">({rec.urgency?.toFixed(2)})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={recBadgeVariant(rec)} className={recBadgeClass(rec)}>
+                        {rec.action}
+                      </Badge>
+                      {expandedPlant === rec.plant
+                        ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      }
+                    </div>
+                  </div>
+                  {expandedPlant === rec.plant && rec.factors && (
+                    <div className="pb-3 px-2 -mx-2 text-sm text-muted-foreground space-y-1">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 pl-2">
+                        <span>Time factor:</span>
+                        <span className="font-mono">{rec.factors.time?.toFixed(2)}</span>
+                        <span>Temp bonus:</span>
+                        <span className="font-mono">+{rec.factors.temp?.toFixed(2)}</span>
+                        <span>Humidity bonus:</span>
+                        <span className="font-mono">+{rec.factors.humidity?.toFixed(2)}</span>
+                        <span>Rain reduction:</span>
+                        <span className="font-mono">{rec.factors.rain?.toFixed(2)}</span>
+                      </div>
+                      {rec.details && (
+                        <div className="pl-2 pt-1 border-t mt-1 grid grid-cols-2 gap-x-4 gap-y-1">
+                          <span>Days since watered:</span>
+                          <span className="font-mono">{rec.details.days_since_watered}</span>
+                          <span>Water threshold:</span>
+                          <span className="font-mono">{rec.details.water_threshold} days</span>
+                          <span>Plant type:</span>
+                          <span>{rec.details.plant_type}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -20,32 +20,10 @@ def api_plants():
             if 'name' not in data:
                 return jsonify({'error': 'Missing plant name'}), 400
 
-            # moisture_level is optional for backward compatibility
-            moisture_level = None
-            if 'moisture_level' in data:
-                try:
-                    moisture_level = int(data['moisture_level'])
-                    if moisture_level < 1 or moisture_level > 10:
-                        return jsonify({'error': 'Moisture level must be between 1 and 10'}), 400
-                except (ValueError, TypeError):
-                    return jsonify({'error': 'Invalid moisture level format'}), 400
-
-            # watering_interval_days is optional
-            watering_interval_days = None
-            if 'watering_interval_days' in data:
-                try:
-                    watering_interval_days = int(data['watering_interval_days'])
-                    if watering_interval_days < 1 or watering_interval_days > 30:
-                        return jsonify({'error': 'watering_interval_days must be between 1 and 30'}), 400
-                except (ValueError, TypeError):
-                    return jsonify({'error': 'Invalid watering_interval_days format'}), 400
-
             try:
                 new_plant = Plant(
                     name=data['name'].strip(),
                     last_watered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    moisture_level=moisture_level,
-                    watering_interval_days=watering_interval_days
                 )
 
                 db.session.add(new_plant)
@@ -75,7 +53,7 @@ def api_plants():
 
 @plants_bp.route('/api/plants/<int:plant_id>', methods=['PATCH'])
 def update_plant(plant_id):
-    """Update a plant's name and/or watering_interval_days."""
+    """Update a plant's name."""
     try:
         plant = Plant.query.get(plant_id)
         if not plant:
@@ -87,15 +65,6 @@ def update_plant(plant_id):
 
         if 'name' in data:
             plant.name = data['name'].strip()
-
-        if 'watering_interval_days' in data:
-            try:
-                watering_interval_days = int(data['watering_interval_days'])
-                if watering_interval_days < 1 or watering_interval_days > 30:
-                    return jsonify({'error': 'watering_interval_days must be between 1 and 30'}), 400
-                plant.watering_interval_days = watering_interval_days
-            except (ValueError, TypeError):
-                return jsonify({'error': 'Invalid watering_interval_days format'}), 400
 
         try:
             db.session.commit()
@@ -174,7 +143,6 @@ def add_plant():
             new_plant = Plant(
                 name=data['name'].strip(),
                 last_watered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                moisture_level=None  # HTML template doesn't provide this
             )
             db.session.add(new_plant)
             db.session.commit()
