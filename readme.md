@@ -1,6 +1,6 @@
 # 🌿 Plant Watering App
 
-A full-stack smart plant watering system built with **Flask**, **React**, and **SQLite**. Tracks plant watering schedules, checks weather via OpenWeatherMap, and recommends when to water each plant based on weather conditions, time since last watering, and optional soil moisture readings.
+A full-stack smart plant watering system built with **Flask**, **React**, and **SQLite**. Tracks plant watering schedules, checks weather via Open-Meteo, and recommends when to water each plant based on weather conditions and time since last watering.
 
 Designed to run permanently on a **Raspberry Pi** and be used from a mobile browser while in the garden.
 
@@ -13,16 +13,13 @@ Designed to run permanently on a **Raspberry Pi** and be used from a mobile brow
 - Overdue / Due Soon badges based on watering interval
 - Smart watering recommendations based on:
   - Time since last watering
-  - Per-plant moisture thresholds
   - Temperature & humidity forecasts
   - Upcoming rain
-  - Soil moisture level (optional manual input)
 - Watering history log — every "Water Now" tap is recorded
 - Weather page with current temp, humidity, and rain forecast
 - Database view — full table of all plants
 - Recommendations auto-refresh when a plant is watered
 - Mobile-optimized UI (large tap targets, full-width buttons)
-- Environment-secure API key handling via `.env`
 
 ---
 
@@ -33,7 +30,7 @@ Designed to run permanently on a **Raspberry Pi** and be used from a mobile brow
 | Backend    | Python, Flask, SQLAlchemy, Gunicorn |
 | Frontend   | React 18, Vite, Tailwind CSS, shadcn/ui |
 | Database   | SQLite (via Flask-SQLAlchemy + Flask-Migrate) |
-| Weather    | OpenWeatherMap API                |
+| Weather    | Open-Meteo API                    |
 | Deployment | Raspberry Pi + systemd            |
 
 ---
@@ -55,10 +52,12 @@ pip install -r requirements.txt
 
 Create a `.env` file:
 ```
-OPENWEATHER_API_KEY=your_key_here
-WEATHER_LOCATION=YourCity,US
+WEATHER_LOCATION=New Caney, Texas, US
+# Optional: skip geocoding by setting explicit coordinates
+# WEATHER_LATITUDE=30.155
+# WEATHER_LONGITUDE=-95.215
 PORT=5001
-DEBUG=True
+DEBUG=False
 ```
 
 ### 3. Build the React frontend
@@ -96,8 +95,10 @@ cd frontend && npm install && npm run build && cd ..
 
 ### 3. Create `.env` on the Pi
 ```
-OPENWEATHER_API_KEY=your_key_here
-WEATHER_LOCATION=YourCity,US
+WEATHER_LOCATION=New Caney, Texas, US
+# Optional: skip geocoding by setting explicit coordinates
+# WEATHER_LATITUDE=30.155
+# WEATHER_LONGITUDE=-95.215
 PORT=5001
 DEBUG=False
 ```
@@ -201,7 +202,7 @@ plant-watering-app/
 
 ## 🔐 Security Notice
 
-This project previously contained a hardcoded OpenWeatherMap API key. That key has been revoked and replaced with a `.env` variable. The project uses `.gitignore` to prevent secrets from being committed.
+This project previously contained a hardcoded third-party weather API key in a stale backup file. The app now uses Open-Meteo, which does not require an API key, and `.gitignore` prevents local secrets/backups from being committed.
 
 ---
 

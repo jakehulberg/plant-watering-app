@@ -38,7 +38,7 @@ plant-watering-app/
 - `models.py`: Database models (Plant model with helper methods)
 
 ### Services (`services/`)
-- **weather_service.py**: Handles OpenWeatherMap API calls
+- **weather_service.py**: Handles Open-Meteo geocoding and forecast API calls
 - **recommendation_service.py**: Contains business logic for generating watering recommendations
 
 ### Routes (`routes/`)
@@ -75,8 +75,9 @@ The application supports both PostgreSQL and SQLite:
 pip install -r requirements.txt
 
 # Set environment variables (optional)
-export DATABASE_URL=postgresql://user:pass@localhost:5432/plants
-export OPENWEATHER_API_KEY=your_key_here
+export DATABASE_URL=postgresql://user:***@localhost:5432/plants
+export WEATHER_LOCATION="New Caney, Texas, US"
+# Optional: export WEATHER_LATITUDE=30.155 WEATHER_LONGITUDE=-95.215
 
 # Run the application
 python app.py
