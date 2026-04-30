@@ -1,67 +1,99 @@
-"""Weather service for fetching weather data from OpenWeatherMap API."""
+"""Weather service for fetching weather data from Open-Meteo."""
 import requests
-import os
 from config import Config
+
+GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
+FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 
 
 def c_to_f(c):
     """Convert Celsius to Fahrenheit."""
-    return round((c * 9/5) + 32, 1)
+    return round((c * 9 / 5) + 32, 1)
+
+
+def _location_search_params(location):
+    """Build Open-Meteo geocoding params from a friendly location string."""
+    parts = [part.strip() for part in location.split(",") if part.strip()]
+    params = {"name": parts[0] if parts else location, "count": 1, "language": "en", "format": "json"}
+    if parts and len(parts[-1]) == 2:
+        params["country_code"] = parts[-1].upper()
+    return params
+
+
+def _get_coordinates():
+    """Return configured coordinates or geocode the configured weather location."""
+    if Config.WEATHER_LATITUDE is not None and Config.WEATHER_LONGITUDE is not None:
+        return Config.WEATHER_LATITUDE, Config.WEATHER_LONGITUDE
+
+    location = Config.WEATHER_LOCATION.strip()
+    if not location:
+        print("Warning: WEATHER_LOCATION is not set")
+        return None
+
+    try:
+        response = requests.get(
+            GEOCODING_URL,
+            params=_location_search_params(location),
+            timeout=10,
+        )
+        response.raise_for_status()
+        results = response.json().get("results", [])
+        if not results:
+            print(f"Open-Meteo geocoding returned no results for {location!r}")
+            return None
+
+        result = results[0]
+        return result["latitude"], result["longitude"]
+    except (requests.exceptions.RequestException, KeyError, ValueError, TypeError) as e:
+        print(f"Open-Meteo geocoding error: {str(e)}")
+        return None
 
 
 def get_weather():
     """
-    Fetch current weather and forecast from OpenWeatherMap API.
-    
+    Fetch current weather and 24-hour rain forecast from Open-Meteo.
+
     Returns:
         dict: Weather data with temperature, humidity, and rain forecast
         None: If weather data cannot be fetched
     """
+    coordinates = _get_coordinates()
+    if coordinates is None:
+        return None
+
+    latitude, longitude = coordinates
+
     try:
-        api_key = Config.OPENWEATHER_API_KEY
-        location = Config.WEATHER_LOCATION
-        
-        if not api_key:
-            print("Warning: OPENWEATHER_API_KEY not set")
-            return None
+        response = requests.get(
+            FORECAST_URL,
+            params={
+                "latitude": latitude,
+                "longitude": longitude,
+                "current": "temperature_2m,relative_humidity_2m,rain",
+                "hourly": "rain",
+                "forecast_days": 2,
+                "timezone": "auto",
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
 
-        current_url = f"http://api.openweathermap.org/data/2.5/weather?q={location}&appid={api_key}&units=metric"
-        forecast_url = f"http://api.openweathermap.org/data/2.5/forecast?q={location}&appid={api_key}&units=metric"
+        current = data["current"]
+        temp_c = current["temperature_2m"]
+        humidity = current["relative_humidity_2m"]
+        rain_last_hour = current.get("rain", 0) or 0
 
-        try:
-            current_response = requests.get(current_url, timeout=10)
-            forecast_response = requests.get(forecast_url, timeout=10)
-        except requests.exceptions.RequestException as e:
-            print(f"Weather API request error: {str(e)}")
-            return None
+        hourly_rain = data.get("hourly", {}).get("rain", [])
+        rain_forecast = round(sum((value or 0) for value in hourly_rain[:24]), 2)
 
-        if current_response.status_code == 200 and forecast_response.status_code == 200:
-            try:
-                current_data = current_response.json()
-                forecast_data = forecast_response.json()
-
-                temp_c = current_data['main']['temp']
-                humidity = current_data['main']['humidity']
-                rain_last_hour = current_data.get('rain', {}).get('1h', 0)
-
-                rain_forecast = 0
-                for entry in forecast_data.get('list', [])[:8]:
-                    rain_forecast += entry.get('rain', {}).get('3h', 0)
-
-                return {
-                    'temperature_c': temp_c,
-                    'temperature_f': c_to_f(temp_c),
-                    'humidity': humidity,
-                    'rain_last_hour': rain_last_hour,
-                    'rain_forecast': rain_forecast
-                }
-            except (KeyError, ValueError) as e:
-                print(f"Weather data parsing error: {str(e)}")
-                return None
-        else:
-            print(f"Weather API returned status codes: {current_response.status_code}, {forecast_response.status_code}")
-            return None
-
-    except Exception as e:
-        print(f"Unexpected error in get_weather: {str(e)}")
+        return {
+            "temperature_c": temp_c,
+            "temperature_f": c_to_f(temp_c),
+            "humidity": humidity,
+            "rain_last_hour": rain_last_hour,
+            "rain_forecast": rain_forecast,
+        }
+    except (requests.exceptions.RequestException, KeyError, ValueError, TypeError) as e:
+        print(f"Open-Meteo weather error: {str(e)}")
         return None

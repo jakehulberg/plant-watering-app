@@ -5,6 +5,25 @@ from models import Plant, WateringHistory
 from database import db
 
 plants_bp = Blueprint('plants', __name__)
+MAX_PLANT_NAME_LENGTH = 100
+
+
+def _validate_plant_name(value):
+    """Return a cleaned plant name or an error message."""
+    if value is None:
+        return None, 'Missing plant name'
+
+    if not isinstance(value, str):
+        return None, 'Plant name must be text'
+
+    name = value.strip()
+    if not name:
+        return None, 'Plant name is required'
+
+    if len(name) > MAX_PLANT_NAME_LENGTH:
+        return None, f'Plant name must be {MAX_PLANT_NAME_LENGTH} characters or fewer'
+
+    return name, None
 
 
 @plants_bp.route('/api/plants', methods=['GET', 'POST'])
@@ -20,9 +39,13 @@ def api_plants():
             if 'name' not in data:
                 return jsonify({'error': 'Missing plant name'}), 400
 
+            name, error = _validate_plant_name(data.get('name'))
+            if error:
+                return jsonify({'error': error}), 400
+
             try:
                 new_plant = Plant(
-                    name=data['name'].strip(),
+                    name=name,
                     last_watered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 )
 
@@ -64,7 +87,10 @@ def update_plant(plant_id):
             return jsonify({'error': 'No data provided'}), 400
 
         if 'name' in data:
-            plant.name = data['name'].strip()
+            name, error = _validate_plant_name(data.get('name'))
+            if error:
+                return jsonify({'error': error}), 400
+            plant.name = name
 
         try:
             db.session.commit()
@@ -139,9 +165,13 @@ def add_plant():
         if not data or "name" not in data:
             return jsonify({"error": "Missing plant name"}), 400
 
+        name, error = _validate_plant_name(data.get('name'))
+        if error:
+            return jsonify({'error': error}), 400
+
         try:
             new_plant = Plant(
-                name=data['name'].strip(),
+                name=name,
                 last_watered=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             )
             db.session.add(new_plant)

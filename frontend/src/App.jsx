@@ -16,6 +16,7 @@ function App() {
   const [refreshKey, setRefreshKey] = useState(0)
 
   const handleWatered = () => setRefreshKey(k => k + 1)
+  const handlePlantAdded = () => setRefreshKey(k => k + 1)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
@@ -50,7 +51,7 @@ function App() {
         {/* Tab Content */}
         {activeTab === 'plants' && (
           <div className="space-y-6">
-            <AddPlantForm />
+            <AddPlantForm onPlantAdded={handlePlantAdded} />
             <PlantList onWatered={handleWatered} />
           </div>
         )}

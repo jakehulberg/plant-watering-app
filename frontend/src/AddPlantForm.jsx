@@ -33,7 +33,7 @@ function AddPlantForm({ onPlantAdded }) {
         throw new Error(error.error || 'Failed to add plant')
       }
 
-      const data = await res.json()
+      await res.json()
       setMessage('success')
       setName('')
       if (onPlantAdded) onPlantAdded()

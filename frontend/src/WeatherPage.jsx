@@ -15,6 +15,7 @@ function WeatherPage({ refreshKey = 0 }) {
 
   const fetchWeather = async () => {
     setLoadingWeather(true)
+    setError('')
     try {
       const res = await fetch('/weather')
       if (!res.ok) throw new Error('Failed to fetch weather')

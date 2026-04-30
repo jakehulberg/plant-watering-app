@@ -1,9 +1,12 @@
-# Ignore Mac local dev stuff
+# Ignore Mac/local dev stuff
+.DS_Store
+*.save
 venv/
+.venv/
 __pycache__/
 *.pyc
 instance/
 plants.db
 .env
 backups/
-venv/
+frontend/node_modules/
