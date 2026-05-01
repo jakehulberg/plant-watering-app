@@ -9,8 +9,13 @@ Designed to run permanently on a **Raspberry Pi** and be used from a mobile brow
 ## 🚀 Features
 
 - Add, edit, and delete plants
-- Per-plant watering interval (days between watering)
-- Overdue / Due Soon badges based on watering interval
+- Per-plant watering interval based on the app's plant profile catalog
+- Watering Command Center on the Plants tab with:
+  - Total, Needs Attention, Overdue, Due Soon, and Watered Today summary cards
+  - Search by plant name
+  - Filters for All, Needs Attention, Overdue, Due Soon, and Watered Today
+  - Urgency-sorted plant cards so the plants that need water float to the top
+  - Status badges plus plant type, watering threshold, and days-since-watered metadata
 - Smart watering recommendations based on:
   - Time since last watering
   - Temperature & humidity forecasts
@@ -20,6 +25,7 @@ Designed to run permanently on a **Raspberry Pi** and be used from a mobile brow
 - Database view — full table of all plants
 - Recommendations auto-refresh when a plant is watered
 - Mobile-optimized UI (large tap targets, full-width buttons)
+- Automated quality gates with backend tests, frontend tests, linting, and production build checks
 
 ---
 
@@ -60,13 +66,15 @@ PORT=5001
 DEBUG=False
 ```
 
-### 3. Build the React frontend
+### 3. Install and build the React frontend
 ```bash
 cd frontend
-npm install
+npm ci
 npm run build
 cd ..
 ```
+
+The built frontend is committed in `frontend/dist` so a simple Pi/home deployment can run after `git pull`. Rebuilding locally is still recommended during development and before committing frontend changes.
 
 ### 4. Run the app
 ```bash
@@ -90,7 +98,7 @@ pip install gunicorn
 
 ### 2. Build the frontend
 ```bash
-cd frontend && npm install && npm run build && cd ..
+cd frontend && npm ci && npm run build && cd ..
 ```
 
 ### 3. Create `.env` on the Pi
@@ -142,11 +150,18 @@ Access at `http://<pi-ip>:5001`
 
 ## 🔄 Updating the App (after git pull on Pi)
 
+Because `frontend/dist` is committed, most updates can stay simple:
+
 ```bash
 git pull
-cd frontend && npm run build && cd ..
 FLASK_APP=app:create_app venv/bin/flask db upgrade
 sudo systemctl restart plant-app
+```
+
+If you changed frontend source locally on the Pi, rebuild before restarting:
+
+```bash
+cd frontend && npm ci && npm run build && cd ..
 ```
 
 ---
@@ -189,14 +204,36 @@ plant-watering-app/
 ├── frontend/               # React + Vite + Tailwind + shadcn/ui
 │   ├── src/
 │   │   ├── App.jsx         # Tab navigation, state wiring
-│   │   ├── PlantList.jsx   # Plant cards, delete, edit, overdue badges
+│   │   ├── PlantList.jsx   # Watering Command Center: stats, filters, search, plant cards
+│   │   ├── plantStatus.js  # Frontend watering status helpers
 │   │   ├── AddPlantForm.jsx
 │   │   ├── WeatherPage.jsx
 │   │   └── DatabasePage.jsx
-│   └── dist/               # Built frontend (served by Flask)
+│   └── dist/               # Built frontend (served by Flask, committed for simple Pi deploy)
+├── tests/                  # Backend unittest route/service coverage
+├── .github/workflows/      # CI quality gates
+├── docs/                   # Phase implementation plans
 ├── .env                    # Not committed
 └── requirements.txt
 ```
+
+---
+
+## ✅ Quality Gates
+
+Run the same checks locally that GitHub Actions runs on every PR:
+
+```bash
+python3 -m py_compile app.py config.py database.py models.py routes/*.py services/*.py
+python3 -m unittest discover -s tests -v
+cd frontend
+npm ci
+npm test -- --run
+npm run lint
+npm run build
+```
+
+GitHub Actions also runs these backend and frontend checks automatically via `.github/workflows/quality-gates.yml`.
 
 ---
 
