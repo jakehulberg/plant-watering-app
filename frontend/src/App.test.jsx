@@ -3,10 +3,27 @@ import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import App from './App.jsx'
 
+const dashboardPlants = [
+  {
+    id: 1,
+    name: 'Overdue Fern',
+    last_watered: '2026-04-24 08:00:00',
+    water_threshold: 3,
+    plant_type: 'Fern',
+  },
+  {
+    id: 2,
+    name: 'Fresh Basil',
+    last_watered: '2026-05-01 08:00:00',
+    water_threshold: 2,
+    plant_type: 'Basil',
+  },
+]
+
 function mockDefaultFetch() {
   vi.stubGlobal('fetch', vi.fn(async (url) => {
     if (url === '/api/plants') {
-      return { ok: true, json: async () => [] }
+      return { ok: true, json: async () => dashboardPlants }
     }
     if (url === '/weather') {
       return {
@@ -27,13 +44,18 @@ function mockDefaultFetch() {
 }
 
 describe('App', () => {
-  it('renders the plant dashboard and switches to the database tab', async () => {
+  it('renders the upgraded watering command center and switches to the database tab', async () => {
+    vi.setSystemTime(new Date('2026-05-01T12:00:00'))
     mockDefaultFetch()
 
     render(<App />)
 
     expect(screen.getByRole('heading', { name: /plant watering app/i })).toBeInTheDocument()
     expect(screen.getByText(/add a new plant to your collection/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /watering command center/i })).toBeInTheDocument()
+    expect(screen.getByText('Overdue Fern')).toBeInTheDocument()
+    expect(screen.getAllByText('Needs Attention').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /overdue/i })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /database/i }))
 
