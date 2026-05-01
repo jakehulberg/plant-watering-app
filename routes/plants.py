@@ -78,7 +78,7 @@ def api_plants():
 def update_plant(plant_id):
     """Update a plant's name."""
     try:
-        plant = Plant.query.get(plant_id)
+        plant = db.session.get(Plant, plant_id)
         if not plant:
             return jsonify({'error': 'Plant not found'}), 404
 
@@ -107,7 +107,7 @@ def update_plant(plant_id):
 def delete_plant(plant_id):
     """Delete a plant (cascade removes its watering history)."""
     try:
-        plant = Plant.query.get(plant_id)
+        plant = db.session.get(Plant, plant_id)
         if not plant:
             return jsonify({'error': 'Plant not found'}), 404
 
@@ -127,7 +127,7 @@ def delete_plant(plant_id):
 def get_plant_history(plant_id):
     """Return watering history for a plant, newest first, limited to 20 entries."""
     try:
-        plant = Plant.query.get(plant_id)
+        plant = db.session.get(Plant, plant_id)
         if not plant:
             return jsonify({'error': 'Plant not found'}), 404
 
@@ -188,7 +188,7 @@ def add_plant():
 def water_plant(plant_id):
     """Route to update watering time and log a WateringHistory entry."""
     try:
-        plant = Plant.query.get(plant_id)
+        plant = db.session.get(Plant, plant_id)
         if not plant:
             return jsonify({'error': 'Plant not found'}), 404
 

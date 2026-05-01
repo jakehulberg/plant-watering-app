@@ -12,10 +12,12 @@ from routes.pages import pages_bp
 migrate = Migrate()
 
 
-def create_app():
+def create_app(config_overrides=None):
     """Create and configure the Flask application."""
     app = Flask(__name__, static_folder='frontend/dist', static_url_path='')
     app.config.from_object(Config)
+    if config_overrides:
+        app.config.update(config_overrides)
 
     db.init_app(app)
     migrate.init_app(app, db)
